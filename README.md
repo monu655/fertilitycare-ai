@@ -10,7 +10,7 @@ A privacy-first web app that helps adults learn about male reproductive health a
 
 1. Open the link, then go to **Sign in** (`/sign-in`).
 2. Press **Try the demo (no sign-up)**. This opens a private demo account filled with made-up example answers. No real data is used, and each click creates a separate demo user.
-3. Look at: **Dashboard**, **Insights**, **Care**, **Ask a Question**, **Consultation Summary**, **Privacy Center**.
+3. Look at: **Dashboard**, **Insights**, **My Progress** (the demo has three made-up assessments to compare), **Care**, **Ask a Question**, **Consultation Summary**, **Privacy Center**, and **Settings** (gentle mode).
 
 In the demo, AI consent is off by default. The AI features are also switched off on the public site until a key is added (see "AI" below). Without AI, the app still works and answers from the source library.
 
@@ -21,6 +21,8 @@ In the demo, AI consent is off by default. The AI features are also switched off
 | Assessment | A 6-step guided form. Only age range is required. Everything else can be skipped. |
 | Insights | Educational cards built by a **rules engine** (not AI). Each card links to named sources and states its limitations. |
 | Ask a Question | Answers only from the app's source library. Urgent symptoms get emergency guidance. Diagnosis, prediction and dosing questions are refused. |
+| My Progress | The person's own submitted assessments side by side, with a "Changed" mark, and line charts of the test numbers they typed. It never says a change is good or bad and draws no normal range. |
+| Gentle mode | Optional setting (kept in this browser only) that hides the person's own numbers and "What you reported" lists on Insights and Progress. Safety information and sources always stay visible. |
 | Care navigation | When to see a professional, what to ask, and urgent warning signs. |
 | Consultation Summary | A printable summary the person can bring to an appointment. They choose which sections to include. |
 | Privacy Center | Separate consents, withdraw consent, download own data (readable text or technical JSON), delete assessment data, delete account. |
@@ -31,7 +33,8 @@ In the demo, AI consent is off by default. The AI features are also switched off
 - AI is **optional**. The app works fully without it.
 - It runs only if the server has `AI_ENABLED="true"` and a key, **and** the person gave a separate AI consent in the Privacy Center.
 - Only coded answers (for example an age range) are sent for insight notes. Name, email and free text are never sent. Emails and phone numbers typed into a question are removed before sending.
-- For Ask a Question, the AI can only rewrite the passages it is given. The reply must pass checks: valid format, no diagnosis or dosing language, and **no number that is not in the sources**. If any check fails, the plain source passages are shown instead, with a short reason code.
+- For Ask a Question, the AI can only rewrite the passages it is given. The reply must pass four checks: expected format, long enough, no diagnosis, medicine, dosing or prediction wording, and **no number that is not in the sources**. If any check fails, the plain source passages are shown instead, with a short reason code.
+- Under every answer the person can open **Safety checks on the AI reply** (which check passed or failed) and **What was sent to an AI service** (the exact question after personal details were removed, and the titles of the passages sent). When no AI was used it says so.
 
 ## Built with
 
@@ -67,7 +70,7 @@ npm run build       # production build, needed before e2e tests
 npm run test:e2e    # end-to-end tests (Playwright), uses a separate test database
 ```
 
-At the last full run in the development sandbox: **66 unit tests and 54 end-to-end tests passed** (desktop and mobile screen sizes), against a local PostgreSQL database.
+At the last full run in the development sandbox: **72 unit tests and 64 end-to-end tests passed** (desktop and mobile screen sizes), against a local PostgreSQL database.
 
 ## Privacy and security design
 
@@ -85,6 +88,8 @@ At the last full run in the development sandbox: **66 unit tests and 54 end-to-e
 - **Not implemented:** email verification and password reset. The "Forgot password?" link on the sign-in page has no page behind it yet.
 - **Rate limiting is in memory.** On a serverless host each server instance counts separately, so limits are approximate. A shared store would be needed for strict limits.
 - **AI was tested with the real Groq service only by hand** (one question, answered and passed the checks). Automated tests use a fake AI service.
+- **The Progress charts and gentle mode are tested only in the development sandbox with demo data.** The chart is SVG with a text table that carries the same numbers for screen readers.
+- **"Save as PDF" uses the browser's print dialog.** The app does not generate PDF files itself.
 - **Accessibility:** forms use labels, error messages are announced, and pages work on phone and desktop. A full accessibility audit with assistive technology has not been done.
 - The source library is a fixed list of pages that were opened and read on the date shown on each entry. Pages can change later.
 - The demo uses **synthetic data only**.

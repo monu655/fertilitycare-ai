@@ -12,6 +12,7 @@ import {
   Settings,
   ShieldCheck,
   Stethoscope,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export const appLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/assessment", label: "Health Assessment", icon: ClipboardList },
   { href: "/insights", label: "My Insights", icon: Lightbulb },
+  { href: "/progress", label: "My Progress", icon: TrendingUp },
   { href: "/ask", label: "Ask a Question", icon: MessageCircleQuestion },
   { href: "/care", label: "Care Navigation", icon: Stethoscope },
   { href: "/summary", label: "Consultation Summary", icon: FileText },

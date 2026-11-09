@@ -1,12 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { AlertTriangle, ExternalLink } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink, Minus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, inputStyles } from "@/components/ui/field";
-import { askAction, type AskState } from "./actions";
+import { askAction, type AskState, type AskView } from "./actions";
 import { MAX_QUESTION_LENGTH, explainFallback } from "./constants";
 
 const initial: AskState = {};
@@ -70,6 +70,7 @@ export function AskForm({ defaultQuestion }: { defaultQuestion: string }) {
                   AI was tried but its answer was not used. {explainFallback(result.fallbackReason)} Showing the sources instead.
                 </p>
               )}
+              {result.kind === "answer" && <Transparency result={result} />}
             </Card>
           )}
 
@@ -97,6 +98,59 @@ export function AskForm({ defaultQuestion }: { defaultQuestion: string }) {
             professional about your own situation.
           </p>
         </section>
+      )}
+    </div>
+  );
+}
+
+const STATUS_TEXT = { passed: "Passed", failed: "Failed", skipped: "Not run" } as const;
+
+// Shows HOW the answer was checked and WHAT was sent out. Both are plain facts from the server.
+function Transparency({ result }: { result: AskView }) {
+  const receipt = result.receipt;
+  return (
+    <div className="space-y-2 border-t border-border pt-3" data-testid="transparency">
+      {result.checks && (
+        <details className="text-sm" data-testid="safety-checks">
+          <summary className="cursor-pointer font-medium text-navy">Safety checks on the AI reply</summary>
+          <ul className="mt-2 space-y-1">
+            {result.checks.map((c) => (
+              <li key={c.id} className="flex items-center gap-2">
+                {c.status === "passed" && <Check className="h-4 w-4 text-success" aria-hidden="true" />}
+                {c.status === "failed" && <X className="h-4 w-4 text-danger" aria-hidden="true" />}
+                {c.status === "skipped" && <Minus className="h-4 w-4 text-muted" aria-hidden="true" />}
+                <span>
+                  {c.label}: <strong>{STATUS_TEXT[c.status]}</strong>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted">If any check fails, the AI reply is not shown and you see the plain source passages.</p>
+        </details>
+      )}
+      {receipt && (
+        <details className="text-sm" data-testid="data-receipt">
+          <summary className="cursor-pointer font-medium text-navy">What was sent to an AI service</summary>
+          {receipt.sentToAi ? (
+            <div className="mt-2 space-y-1">
+              <p>
+                Sent to <strong>{receipt.provider}</strong>:
+              </p>
+              <ul className="list-disc space-y-1 pl-5">
+                <li>
+                  Your question: <q>{receipt.question}</q>
+                  {receipt.removedDetails && " (an email address or phone number was removed first)"}
+                </li>
+                <li>{receipt.passageTopics?.length ?? 0} passages from our source library: {receipt.passageTopics?.join("; ")}</li>
+              </ul>
+              <p className="text-xs text-muted">
+                Not sent: your name, your email, your assessment answers, your other questions. We do not save your question.
+              </p>
+            </div>
+          ) : (
+            <p className="mt-2">Nothing was sent to any AI service. This answer was put together on our own server from the source passages.</p>
+          )}
+        </details>
       )}
     </div>
   );

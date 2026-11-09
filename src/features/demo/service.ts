@@ -4,7 +4,7 @@ import { and, eq, lt } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { generateAndStoreInsights } from "@/features/insights/queries";
 import { CONSENT_VERSION } from "@/features/assessment/queries";
-import { DEMO_ANSWERS } from "./synthetic-data";
+import { DEMO_ANSWERS, DEMO_HISTORY } from "./synthetic-data";
 
 const DEMO_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
@@ -31,19 +31,27 @@ export async function createDemoUser(): Promise<{ email: string; password: strin
     { userId: user.id, purpose: "AI_PROCESSING", granted: false, version: CONSENT_VERSION },
   ]);
 
-  const [assessment] = await db
-    .insert(schema.assessments)
-    .values({ userId: user.id, status: "SUBMITTED", currentStep: 6, submittedAt: new Date() })
-    .returning({ id: schema.assessments.id });
+  // Earlier made-up assessments first (dated in the past), then the current one.
+  const addAssessment = async (answers: Record<string, Record<string, unknown>>, submittedAt: Date) => {
+    const [assessment] = await db
+      .insert(schema.assessments)
+      .values({ userId: user.id, status: "SUBMITTED", currentStep: 6, submittedAt, createdAt: submittedAt, updatedAt: submittedAt })
+      .returning({ id: schema.assessments.id });
+    await db.insert(schema.assessmentResponses).values(
+      Object.entries(answers).map(([section, data]) => ({
+        assessmentId: assessment.id,
+        userId: user.id,
+        section,
+        data,
+      })),
+    );
+    return assessment;
+  };
 
-  await db.insert(schema.assessmentResponses).values(
-    Object.entries(DEMO_ANSWERS).map(([section, data]) => ({
-      assessmentId: assessment.id,
-      userId: user.id,
-      section,
-      data,
-    })),
-  );
+  for (const earlier of DEMO_HISTORY) {
+    await addAssessment(earlier.answers, new Date(Date.now() - earlier.daysAgo * 24 * 60 * 60 * 1000));
+  }
+  const assessment = await addAssessment(DEMO_ANSWERS, new Date());
 
   await generateAndStoreInsights(user.id, assessment.id);
   return { email, password, userId: user.id };

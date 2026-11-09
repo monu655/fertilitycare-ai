@@ -19,7 +19,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-export function InsightCard({ insight }: { insight: Insight }) {
+export function InsightCard({ insight, gentle = false }: { insight: Insight; gentle?: boolean }) {
   const sources = insight.sourceIds.map((id) => sourceById(id)).filter((s): s is NonNullable<typeof s> => Boolean(s));
 
   return (
@@ -35,7 +35,7 @@ export function InsightCard({ insight }: { insight: Insight }) {
         <h3 className="text-lg font-semibold text-navy">{insight.topic}</h3>
       </header>
 
-      {insight.reported.length > 0 && (
+      {!gentle && insight.reported.length > 0 && (
         <Section label="What you reported">
           <ul className="list-disc space-y-0.5 pl-5 text-sm">
             {insight.reported.map((r) => (

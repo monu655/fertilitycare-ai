@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEMO_ANSWERS, demoEnabled } from "@/features/demo/synthetic-data";
+import { DEMO_ANSWERS, DEMO_HISTORY, demoEnabled } from "@/features/demo/synthetic-data";
 import { SECTIONS } from "@/features/assessment/questions";
 import { sectionSchema } from "@/lib/validation/assessment";
 import { buildInsights } from "@/lib/insights/rules";
@@ -13,6 +13,16 @@ describe("demo data", () => {
     }
   });
 
+  it("earlier demo assessments also pass validation and are in the past", () => {
+    expect(DEMO_HISTORY.length).toBeGreaterThan(0);
+    for (const h of DEMO_HISTORY) {
+      expect(h.daysAgo).toBeGreaterThan(0);
+      for (const section of SECTIONS) {
+        expect(sectionSchema(section).safeParse(h.answers[section.id] ?? {}).success, section.id).toBe(true);
+      }
+    }
+  });
+
   it("produces valid, sourced insights", () => {
     const insights = validateInsights(buildInsights(DEMO_ANSWERS));
     expect(insights.length).toBeGreaterThan(2);
@@ -20,7 +30,7 @@ describe("demo data", () => {
   });
 
   it("contains no email, phone or name", () => {
-    expect(JSON.stringify(DEMO_ANSWERS)).not.toMatch(/@|\d{7,}/);
+    expect(JSON.stringify([DEMO_ANSWERS, DEMO_HISTORY])).not.toMatch(/@|\d{7,}/);
   });
 
   it("is on only when DEMO_MODE is exactly true", () => {

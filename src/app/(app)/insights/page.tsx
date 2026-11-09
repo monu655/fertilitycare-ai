@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { InsightCard } from "@/features/insights/insight-card";
 import { loadInsights } from "@/features/insights/queries";
+import { isGentle } from "@/features/settings/gentle";
 import { EVIDENCE_VERSION } from "@/data/evidence-library";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
   const filter = FILTERS.some((f) => f.id === filterParam) ? (filterParam as string) : "all";
 
   const bundle = await loadInsights(user.id);
+  const gentle = await isGentle();
 
   if (!bundle) {
     return (
@@ -51,6 +53,15 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
         These insights are educational. They are not a diagnosis, they do not predict fertility, and they do not replace a
         healthcare professional.
       </p>
+
+      {gentle && (
+        <p role="note" className="rounded-lg bg-[#eef1f6] p-3 text-sm text-navy" data-testid="gentle-note">
+          Gentle mode is on: your own numbers and answers are hidden on these cards. Sources and advice stay visible.{" "}
+          <Link href="/settings" className="font-medium text-teal-dark underline">
+            Change in Settings
+          </Link>
+        </p>
+      )}
 
       <nav aria-label="Insight filters" className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
@@ -90,7 +101,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
       ) : (
         <div className="space-y-5">
           {shown.map((i) => (
-            <InsightCard key={i.id} insight={i} />
+            <InsightCard key={i.id} insight={i} gentle={gentle} />
           ))}
         </div>
       )}

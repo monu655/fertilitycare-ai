@@ -12,6 +12,18 @@ import { retrieve } from "./retrieve";
 
 export type AskKind = "answer" | "no_answer" | "urgent" | "refused";
 
+// One safety check on an AI reply. "skipped" means an earlier check already failed.
+export type SafetyCheck = { id: string; label: string; status: "passed" | "failed" | "skipped" };
+
+// Exactly what was handed to an AI company for this answer. Never includes name, email or assessment answers.
+export type DataReceipt = {
+  sentToAi: boolean;
+  provider?: string;
+  question?: string;
+  removedDetails?: boolean;
+  passageTopics?: string[];
+};
+
 export type AskResult = {
   kind: AskKind;
   mode: "ai" | "sources" | "none";
@@ -20,6 +32,8 @@ export type AskResult = {
   passages: Passage[];
   // Set when the AI was tried but its answer was not used. A short code, never any content.
   fallbackReason?: string;
+  checks?: SafetyCheck[];
+  receipt?: DataReceipt;
 };
 
 
@@ -95,6 +109,57 @@ function numbersAreGrounded(answer: string, passages: Passage[]): boolean {
   return numbersIn(answer).every((n) => source.includes(n));
 }
 
+const CHECK_LABELS = {
+  format: "The reply was in the expected format",
+  length: "The answer is long enough to be useful",
+  safety: "No diagnosis, medicine, dosing or prediction wording",
+  numbers: "Every number in the answer appears in the sources",
+} as const;
+const CHECK_ORDER = ["format", "length", "safety", "numbers"] as const;
+
+// Runs the checks in order and records each result, so the screen can show them.
+function checkReply(text: string, found: Passage[]) {
+  const status: Partial<Record<(typeof CHECK_ORDER)[number], "passed" | "failed">> = {};
+  const finish = (reason?: string, answer?: string, usedPassages: number[] = []) => ({
+    checks: CHECK_ORDER.map((id) => ({ id, label: CHECK_LABELS[id], status: status[id] ?? "skipped" })) as SafetyCheck[],
+    reason,
+    answer,
+    usedPassages,
+  });
+
+  const json = extractJson(text);
+  if (json === null) {
+    status.format = "failed";
+    return finish("bad_json");
+  }
+  const parsed = AnswerSchema.safeParse(json);
+  if (!parsed.success) {
+    status.format = "failed";
+    return finish("bad_shape");
+  }
+  status.format = "passed";
+
+  const { answer, usedPassages } = parsed.data;
+  if (answer.length < 20) {
+    status.length = "failed";
+    return finish("too_short");
+  }
+  status.length = "passed";
+
+  if (violatesSafety(answer)) {
+    status.safety = "failed";
+    return finish("unsafe");
+  }
+  status.safety = "passed";
+
+  if (!numbersAreGrounded(answer, found)) {
+    status.numbers = "failed";
+    return finish("invented_number");
+  }
+  status.numbers = "passed";
+  return finish(undefined, answer, usedPassages);
+}
+
 export async function answerQuestion(
   question: string,
   options: { aiConsent: boolean },
@@ -138,36 +203,43 @@ export async function answerQuestion(
 
   // Try the AI only if it is switched on, a key exists, and the person gave the separate AI consent.
   let fallbackReason: string | undefined;
-  if (options.aiConsent && activeProvider(deps.env ?? process.env)) {
+  let checks: SafetyCheck[] | undefined;
+  let receipt: DataReceipt = { sentToAi: false };
+  const provider = options.aiConsent ? activeProvider(deps.env ?? process.env) : null;
+  if (provider) {
+    const safeQuestion = redact(clean);
+    receipt = {
+      sentToAi: true,
+      provider: provider === "groq" ? "Groq" : "Anthropic",
+      question: safeQuestion,
+      removedDetails: safeQuestion !== clean,
+      passageTopics: found.map((p) => p.topic),
+    };
     const numbered = found.map((p, i) => `[${i + 1}] ${p.topic}: ${p.text}`).join("\n");
     const reply = await callModelDetailed(
-      { system: SYSTEM_PROMPT, user: `Question: ${redact(clean)}\n\nPassages:\n${numbered}`, maxTokens: 500, json: true },
+      { system: SYSTEM_PROMPT, user: `Question: ${safeQuestion}\n\nPassages:\n${numbered}`, maxTokens: 500, json: true },
       deps,
     );
 
     if (!reply.ok) {
       fallbackReason = reply.reason; // for example http_401, http_429, timeout, network
     } else {
-      const json = extractJson(reply.text);
-      if (json === null) {
-        fallbackReason = "bad_json";
+      const result = checkReply(reply.text, found);
+      checks = result.checks;
+      if (result.reason || !result.answer) {
+        fallbackReason = result.reason ?? "bad_shape";
       } else {
-        const parsed = AnswerSchema.safeParse(json);
-        if (!parsed.success) fallbackReason = "bad_shape";
-        else if (parsed.data.answer.length < 20) fallbackReason = "too_short";
-        else if (violatesSafety(parsed.data.answer)) fallbackReason = "unsafe";
-        else if (!numbersAreGrounded(parsed.data.answer, found)) fallbackReason = "invented_number";
-        else {
-          // If the model names valid passages we show those. If it names none, we show all that were searched.
-          const used = [...new Set(parsed.data.usedPassages)].filter((n) => n >= 1 && n <= found.length);
-          return {
-            kind: "answer",
-            mode: "ai",
-            message: "AI-assisted answer, checked against the sources below.",
-            answer: parsed.data.answer,
-            passages: used.length > 0 ? used.map((n) => found[n - 1]) : found,
-          };
-        }
+        // If the model names valid passages we show those. If it names none, we show all that were searched.
+        const used = [...new Set(result.usedPassages)].filter((n) => n >= 1 && n <= found.length);
+        return {
+          kind: "answer",
+          mode: "ai",
+          message: "AI-assisted answer, checked against the sources below.",
+          answer: result.answer,
+          passages: used.length > 0 ? used.map((n) => found[n - 1]) : found,
+          checks,
+          receipt,
+        };
       }
     }
     // The reason is a short code. It is shown on screen and never contains the question or the answer.
@@ -179,5 +251,7 @@ export async function answerQuestion(
     message: "Here is what the sources say about your question.",
     passages: found,
     fallbackReason,
+    checks,
+    receipt,
   };
 }

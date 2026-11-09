@@ -3,12 +3,15 @@ import { requireUser } from "@/lib/session";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { NameForm, PasswordForm } from "@/features/settings/forms";
+import { GentleForm } from "@/features/settings/gentle-form";
+import { isGentle } from "@/features/settings/gentle";
 
 export const metadata: Metadata = { title: "Settings" };
 export const instant = false;
 
 export default async function SettingsPage() {
   const user = await requireUser();
+  const gentle = await isGentle();
   return (
     <div className="space-y-6">
       <header>
@@ -34,6 +37,16 @@ export default async function SettingsPage() {
           Sign-in sessions last 8 hours. After a password change, a session already open on another device keeps working
           until it expires.
         </p>
+      </Card>
+
+      <Card className="space-y-3">
+        <CardTitle>Gentle mode</CardTitle>
+        <p className="text-sm text-muted">
+          Health information can feel heavy. Gentle mode hides your own test numbers and the &quot;What you reported&quot; lists on
+          your Insights and Progress pages. Safety information, sources and advice to see a professional always stay visible.
+          This choice is saved only in this browser.
+        </p>
+        <GentleForm defaultOn={gentle} />
       </Card>
 
       <Card className="space-y-3">

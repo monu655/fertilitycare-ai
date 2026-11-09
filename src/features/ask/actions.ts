@@ -7,7 +7,7 @@ import { fieldErrors } from "@/lib/validation/auth";
 import { sourceById } from "@/data/evidence-library";
 import { consentState } from "@/features/privacy/queries";
 import { MAX_QUESTION_LENGTH } from "./constants";
-import { answerQuestion, type AskKind } from "./service";
+import { answerQuestion, type AskKind, type DataReceipt, type SafetyCheck } from "./service";
 
 // What the browser receives. Source links are built on the server from the evidence library.
 export type AskView = {
@@ -16,6 +16,8 @@ export type AskView = {
   message: string;
   answer?: string;
   fallbackReason?: string;
+  checks?: SafetyCheck[];
+  receipt?: DataReceipt;
   passages: {
     id: string;
     topic: string;
@@ -63,6 +65,8 @@ export async function askAction(_prev: AskState, formData: FormData): Promise<As
       message: result.message,
       answer: result.answer,
       fallbackReason: result.fallbackReason,
+      checks: result.checks,
+      receipt: result.receipt,
       passages: result.passages.map((p) => ({
         id: p.id,
         topic: p.topic,
