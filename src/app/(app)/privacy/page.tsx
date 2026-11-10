@@ -4,25 +4,13 @@ import { requireUser } from "@/lib/session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 import { consentState, recentActivity } from "@/features/privacy/queries";
+import { ACTION_LABELS } from "@/features/privacy/activity-labels";
 import { AiConsentForm, DeleteAccountForm, DeleteAssessmentsForm, WithdrawConsentForm } from "@/features/privacy/forms";
 
 export const metadata: Metadata = { title: "Privacy Center" };
 export const instant = false;
-
-const ACTION_LABELS: Record<string, string> = {
-  "account.created": "Account created",
-  "consent.granted": "Health consent given",
-  "consent.withdrawn": "Health consent withdrawn",
-  "consent.ai_granted": "AI notes consent given",
-  "consent.ai_withdrawn": "AI notes consent withdrawn",
-  "assessment.submitted": "Assessment submitted",
-  "assessments.deleted": "Assessment data deleted",
-  "data.exported": "Data downloaded",
-  "summary.questions_saved": "Consultation questions saved",
-  "password.changed": "Password changed",
-  "profile.updated": "Name updated",
-};
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
 
@@ -126,6 +114,11 @@ export default async function PrivacyPage() {
             ))}
           </ul>
         )}
+        <p className="text-sm">
+          <Link href="/privacy/activity" className="font-medium text-teal-dark underline">
+            See all activity
+          </Link>
+        </p>
         <p className="text-xs text-muted">
           This demo keeps no separate backup copies. A real deployment must define how long backups are kept, and that
           must be reviewed before launch.

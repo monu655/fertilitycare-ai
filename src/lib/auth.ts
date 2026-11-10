@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { signInSchema } from "@/lib/validation/auth";
 import { rateLimit } from "@/lib/security/rate-limit";
+import { recordAudit } from "@/lib/audit";
 
 // A real bcrypt hash, made lazily on first use (NOT at import time, because Next.js
 // rejects random values created while prerendering). We compare against it when the
@@ -32,6 +33,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email)).limit(1);
         const ok = await bcrypt.compare(password, user?.passwordHash ?? getDummyHash());
         if (!user || !ok) return null;
+
+        await recordAudit(user.id, "signin");
 
         return { id: user.id, email: user.email, name: user.name, role: user.role, isDemo: user.isDemo };
       },

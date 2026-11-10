@@ -43,6 +43,11 @@ export default async function AskPage({ searchParams }: { searchParams: Promise<
             ? "An AI model rewrites the matching source passages into a short answer. We check the answer against the sources and show the plain passages if anything looks wrong. Your question (with emails and phone numbers removed) is sent to the AI provider. It is not saved by us."
             : "Nothing leaves our server. You see the matching passages from the sources. AI-assisted answers can be turned on by the site owner, and need your separate consent in the Privacy Center."}
         </p>
+        <p className="text-sm">
+          <Link href="/how-we-test" className="font-medium text-teal-dark underline">
+            How we test safety
+          </Link>
+        </p>
         {!consent.ai && (
           <p className="text-sm">
             <Link href="/privacy" className="font-medium text-teal-dark underline">

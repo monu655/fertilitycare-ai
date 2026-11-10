@@ -10,7 +10,7 @@ A privacy-first web app that helps adults learn about male reproductive health a
 
 1. Open the link, then go to **Sign in** (`/sign-in`).
 2. Press **Try the demo (no sign-up)**. This opens a private demo account filled with made-up example answers. No real data is used, and each click creates a separate demo user.
-3. Look at: **Dashboard**, **Insights**, **My Progress** (the demo has three made-up assessments to compare), **Care**, **Ask a Question**, **Consultation Summary**, **Privacy Center**, and **Settings** (gentle mode).
+3. Look at: **Dashboard**, **Insights**, **My Progress** (the demo has three made-up assessments to compare), **Care**, **Ask a Question**, **Consultation Summary**, **Privacy Center** (with full account activity), **Settings** (gentle mode), and the public page **How we test safety** (`/how-we-test`).
 
 In the demo, AI consent is off by default. The AI features are also switched off on the public site until a key is added (see "AI" below). Without AI, the app still works and answers from the source library.
 
@@ -23,6 +23,8 @@ In the demo, AI consent is off by default. The AI features are also switched off
 | Ask a Question | Answers only from the app's source library. Urgent symptoms get emergency guidance. Diagnosis, prediction and dosing questions are refused. |
 | My Progress | The person's own submitted assessments side by side, with a "Changed" mark, and line charts of the test numbers they typed. It never says a change is good or bad and draws no normal range. |
 | Gentle mode | Optional setting (kept in this browser only) that hides the person's own numbers and "What you reported" lists on Insights and Progress. Safety information and sources always stay visible. |
+| How we test safety | Public page that lists about 35 safety test cases (emergency questions, diagnosis and dosing requests, made-up unsafe AI replies, removal of emails and phone numbers) and runs them **live** against the app's real code. The same list runs as automated tests. Known gaps are shown openly. |
+| Account activity | Privacy Center page with the person's own audit events in plain words (sign-in, consent changes, downloads, deletions). It contains no health content. |
 | Care navigation | When to see a professional, what to ask, and urgent warning signs. |
 | Consultation Summary | A printable summary the person can bring to an appointment. They choose which sections to include. |
 | Privacy Center | Separate consents, withdraw consent, download own data (readable text or technical JSON), delete assessment data, delete account. |
@@ -70,7 +72,7 @@ npm run build       # production build, needed before e2e tests
 npm run test:e2e    # end-to-end tests (Playwright), uses a separate test database
 ```
 
-At the last full run in the development sandbox: **72 unit tests and 64 end-to-end tests passed** (desktop and mobile screen sizes), against a local PostgreSQL database.
+At the last full run in the development sandbox: **112 unit tests and 74 end-to-end tests passed** (desktop and mobile screen sizes), against a local PostgreSQL database.
 
 ## Privacy and security design
 
@@ -91,6 +93,8 @@ At the last full run in the development sandbox: **72 unit tests and 64 end-to-e
 - **The Progress charts and gentle mode are tested only in the development sandbox with demo data.** The chart is SVG with a text table that carries the same numbers for screen readers.
 - **"Save as PDF" uses the browser's print dialog.** The app does not generate PDF files itself.
 - **Accessibility:** forms use labels, error messages are announced, and pages work on phone and desktop. A full accessibility audit with assistive technology has not been done.
+- **The safety page tests our own rules, not the AI model.** About 35 cases cannot cover every sentence. Known gaps today: misspelled questions (for example "infertlie") and many other languages are not caught by the question rules, although every AI reply still passes the reply checks. While preparing this page, three real misses in the emergency and diagnosis rules were found and fixed.
+- **The source link checker (`npm run check:links`, and a weekly GitHub workflow) has not been run against the real internet by the developer's sandbox**, which has no outside access. Run it once yourself before relying on it.
 - The source library is a fixed list of pages that were opened and read on the date shown on each entry. Pages can change later.
 - The demo uses **synthetic data only**.
 

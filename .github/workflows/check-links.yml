@@ -1,0 +1,17 @@
+# Every Monday (and on demand) open every source link and fail if one is broken.
+name: Check source links
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/check-links.mjs

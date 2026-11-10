@@ -43,12 +43,16 @@ const URGENT = [
   /\btwisted (?:testicle|testis|ball)/i,
   /(?:severe|sudden|intense|unbearable|sharp).{0,40}pain.{0,40}(?:testic|testis|scrot|\bball|groin)/i,
   /(?:testic|testis|scrot|\bball|groin).{0,40}(?:severe|sudden|intense|unbearable|sharp).{0,30}pain/i,
+  /\b(?:testicle|testis|testes|balls?)\b.{0,30}\btwisted\b/i,
+  /(?:severe|sudden|intense|unbearable|sharp).{0,30}(?:testicular|scrotal|groin) pain/i,
   /(?:chest pain|can'?t breathe|suicid|kill myself)/i,
 ];
 
 // Diagnosis, predictions and treatment advice are not what this app does.
 const REFUSE = [
   /\b(?:am i|do i have|do i suffer|could i be|might i be|is it possible (?:that )?i am)\b.{0,50}(?:infertil|sterile|azoosperm|oligosperm|low sperm|sperm problem)/i,
+  /\b(?:tell|confirm|say|check|know)\b.{0,30}\b(?:if|whether)\b.{0,15}\bi(?:'m| am)\b.{0,20}(?:infertil|sterile)/i,
+  /\bkya\b.{0,25}\b(?:infertil\w*|sterile|bachcha|bacha|papa|baap|pita)\b/i,
   /\bdiagnos/i,
   /what(?:'s| is) wrong with me/i,
   /\b(?:will|can|would) (?:i|we|my wife|my partner) (?:get|have|become|conceive|be able)/i,
@@ -118,7 +122,7 @@ const CHECK_LABELS = {
 const CHECK_ORDER = ["format", "length", "safety", "numbers"] as const;
 
 // Runs the checks in order and records each result, so the screen can show them.
-function checkReply(text: string, found: Passage[]) {
+export function checkReply(text: string, found: Passage[]) {
   const status: Partial<Record<(typeof CHECK_ORDER)[number], "passed" | "failed">> = {};
   const finish = (reason?: string, answer?: string, usedPassages: number[] = []) => ({
     checks: CHECK_ORDER.map((id) => ({ id, label: CHECK_LABELS[id], status: status[id] ?? "skipped" })) as SafetyCheck[],
