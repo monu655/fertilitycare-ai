@@ -2,6 +2,7 @@ import { LogOut, Menu } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { NavLinks } from "./nav-links";
+import { MobileMenu } from "@/components/ui/mobile-menu";
 import { signOutAction } from "@/features/auth/actions";
 
 type Props = { userName: string; isDemo: boolean; children: React.ReactNode };
@@ -36,22 +37,20 @@ export function AppShell({ userName, isDemo, children }: Props) {
         {/* Mobile top bar with a native <details> menu (keyboard and screen-reader friendly) */}
         <header className="flex items-center justify-between border-b border-border bg-white px-4 py-3 md:hidden print:hidden">
           <Logo />
-          <details className="relative">
-            <summary
-              aria-label="Open navigation"
-              className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-lg border border-border"
-            >
-              <Menu className="h-5 w-5" aria-hidden="true" />
-            </summary>
-            <div className="absolute right-0 z-40 mt-2 w-72 rounded-xl border border-border bg-white p-3 shadow-lg">
-              <nav aria-label="App mobile">
-                <NavLinks />
-              </nav>
-              <div className="mt-2 border-t border-border pt-2">
-                <SignOutButton className="w-full" />
-              </div>
+          <MobileMenu
+            label="Open navigation"
+            className="relative"
+            buttonClassName="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-lg border border-border"
+            panelClassName="absolute right-0 z-40 mt-2 w-72 rounded-xl border border-border bg-white p-3 shadow-lg"
+            icon={<Menu className="h-5 w-5" aria-hidden="true" />}
+          >
+            <nav aria-label="App mobile">
+              <NavLinks />
+            </nav>
+            <div className="mt-2 border-t border-border pt-2">
+              <SignOutButton className="w-full" />
             </div>
-          </details>
+          </MobileMenu>
         </header>
 
         {isDemo && (

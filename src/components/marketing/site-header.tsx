@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { ButtonLink } from "@/components/ui/button";
+import { MobileMenu } from "@/components/ui/mobile-menu";
 
 const links = [
   { href: "/#how-it-works", label: "How It Works" },
@@ -32,29 +33,27 @@ export function SiteHeader() {
         </div>
 
         {/* Mobile menu: native <details>, works with keyboard and screen readers without JavaScript */}
-        <details className="relative md:hidden">
-          <summary
-            className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-lg border border-white/30"
-            aria-label="Open menu"
-          >
-            <Menu className="h-5 w-5" aria-hidden="true" />
-          </summary>
-          <div className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-border bg-white p-3 text-navy shadow-lg">
-            <nav aria-label="Mobile" className="flex flex-col">
-              {links.map((l) => (
-                <Link key={l.href} href={l.href} className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-teal-light">
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-            <div className="mt-2 grid gap-2 border-t border-border pt-3">
-              <ButtonLink href="/sign-in" variant="secondary">
-                Sign In
-              </ButtonLink>
-              <ButtonLink href="/sign-up">Get Started</ButtonLink>
-            </div>
+        <MobileMenu
+          label="Open menu"
+          className="relative md:hidden"
+          buttonClassName="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-lg border border-white/30"
+          panelClassName="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-border bg-white p-3 text-navy shadow-lg"
+          icon={<Menu className="h-5 w-5" aria-hidden="true" />}
+        >
+          <nav aria-label="Mobile" className="flex flex-col">
+            {links.map((l) => (
+              <Link key={l.href} href={l.href} className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-teal-light">
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="mt-2 grid gap-2 border-t border-border pt-3">
+            <ButtonLink href="/sign-in" variant="secondary">
+              Sign In
+            </ButtonLink>
+            <ButtonLink href="/sign-up">Get Started</ButtonLink>
           </div>
-        </details>
+        </MobileMenu>
       </div>
     </header>
   );
