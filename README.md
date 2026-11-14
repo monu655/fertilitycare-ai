@@ -24,6 +24,7 @@ In the demo, AI consent is off by default. The AI features are also switched off
 | My Progress | The person's own submitted assessments side by side, with a "Changed" mark, and line charts of the test numbers they typed. It never says a change is good or bad and draws no normal range. |
 | Gentle mode | Optional setting (kept in this browser only) that hides the person's own numbers and "What you reported" lists on Insights and Progress. Safety information and sources always stay visible. |
 | How we test safety | Public page that lists about 35 safety test cases (emergency questions, diagnosis and dosing requests, made-up unsafe AI replies, removal of emails and phone numbers) and runs them **live** against the app's real code. The same list runs as automated tests. Known gaps are shown openly. |
+| Safety card | Public page (`/safety-card`) that says what the app is for, what it does not do, how answers are made, where data goes, what was tested (live count) and what has not been done. It shows whether AI is switched on at that moment. |
 | Account activity | Privacy Center page with the person's own audit events in plain words (sign-in, consent changes, downloads, deletions). It contains no health content. |
 | Care navigation | When to see a professional, what to ask, and urgent warning signs. |
 | Consultation Summary | A printable summary the person can bring to an appointment. They choose which sections to include. |
@@ -87,7 +88,7 @@ At the last full run in the development sandbox: **112 unit tests and 74 end-to-
 
 - **Not a medical device and not medical advice.** No clinical validation has been done.
 - **No compliance is claimed.** This project has not been audited for HIPAA, GDPR or any other law or standard.
-- **Not implemented:** email verification and password reset. The "Forgot password?" link on the sign-in page has no page behind it yet.
+- **Not implemented:** email verification and password reset (the app sends no emails). The "Forgot password?" link opens a page that says this plainly and lists what to do instead.
 - **Rate limiting is in memory.** On a serverless host each server instance counts separately, so limits are approximate. A shared store would be needed for strict limits.
 - **AI was tested with the real Groq service only by hand** (one question, answered and passed the checks). Automated tests use a fake AI service.
 - **The Progress charts and gentle mode are tested only in the development sandbox with demo data.** The chart is SVG with a text table that carries the same numbers for screen readers.

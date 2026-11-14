@@ -17,6 +17,7 @@ export function SiteFooter() {
             <Link href="/#how-it-works" className="block hover:text-white">How It Works</Link>
             <Link href="/resources" className="block hover:text-white">Health Resources</Link>
             <Link href="/how-we-test" className="block hover:text-white">How we test safety</Link>
+            <Link href="/safety-card" className="block hover:text-white">Safety card</Link>
             <Link href="/sign-up" className="block hover:text-white">Get Started</Link>
           </nav>
           <nav aria-label="Legal" className="space-y-2 text-sm">

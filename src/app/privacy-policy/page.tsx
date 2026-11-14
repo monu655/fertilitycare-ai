@@ -35,15 +35,17 @@ export default function PrivacyPolicyPage() {
         <section className="space-y-2">
           <h2 className="text-xl font-semibold text-navy">AI processing</h2>
           <p className="text-sm text-muted">
-            AI processing of your answers is not active in this version. If it is added, you will be asked for separate
-            consent first.
+            AI is optional. It is used only if the server has it switched on and you gave a separate AI consent in the
+            Privacy Center. Only coded answers (or your question with emails and phone numbers removed) are sent, never your
+            name or email. Under each answer you can see what was sent, or that nothing was.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-xl font-semibold text-navy">Deletion and export</h2>
           <p className="text-sm text-muted">
-            Self-service deletion and export are not built yet. They are planned for the Privacy Center.
+            In the Privacy Center you can withdraw consent, download your data, delete your assessment data, and delete your
+            account.
           </p>
         </section>
       </main>
