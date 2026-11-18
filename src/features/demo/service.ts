@@ -4,7 +4,8 @@ import { and, eq, lt } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { generateAndStoreInsights } from "@/features/insights/queries";
 import { CONSENT_VERSION } from "@/features/assessment/queries";
-import { DEMO_ANSWERS, DEMO_HISTORY } from "./synthetic-data";
+import { addDays, todayIso } from "@/lib/dates";
+import { DEMO_ANSWERS, DEMO_HISTORY, DEMO_LABS, demoHabitEntries } from "./synthetic-data";
 
 const DEMO_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
@@ -29,6 +30,7 @@ export async function createDemoUser(): Promise<{ email: string; password: strin
   await db.insert(schema.consentRecords).values([
     { userId: user.id, purpose: "HEALTH_ASSESSMENT", granted: true, version: CONSENT_VERSION },
     { userId: user.id, purpose: "AI_PROCESSING", granted: false, version: CONSENT_VERSION },
+    { userId: user.id, purpose: "AI_TRACKING_DATA", granted: false, version: CONSENT_VERSION },
   ]);
 
   // Earlier made-up assessments first (dated in the past), then the current one.
@@ -52,6 +54,14 @@ export async function createDemoUser(): Promise<{ email: string; password: strin
     await addAssessment(earlier.answers, new Date(Date.now() - earlier.daysAgo * 24 * 60 * 60 * 1000));
   }
   const assessment = await addAssessment(DEMO_ANSWERS, new Date());
+
+  const today = todayIso();
+  await db.insert(schema.habitEntries).values(
+    demoHabitEntries().map(({ daysAgo, ...v }) => ({ userId: user.id, entryDate: addDays(today, -daysAgo), ...v })),
+  );
+  await db.insert(schema.biomarkerRecords).values(
+    DEMO_LABS.map((l) => ({ userId: user.id, takenOn: addDays(today, -l.daysAgo), marker: l.marker, value: l.value, unit: l.unit, notes: l.notes })),
+  );
 
   await generateAndStoreInsights(user.id, assessment.id);
   return { email, password, userId: user.id };

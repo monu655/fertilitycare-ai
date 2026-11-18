@@ -51,6 +51,32 @@ export async function setAiConsentAction(_prev: ActionState, formData: FormData)
   };
 }
 
+// Separate consent for sending daily habit numbers (and, only when chosen each time, lab values) to an AI service.
+export async function setAiTrackingConsentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const grant = formData.get("grant") === "true";
+  const state = await consentState(user.id);
+
+  if (!state.health) return { message: "Give health-assessment consent first (in the Health Assessment, step 1)." };
+  if (state.aiTracking === grant) return { ok: true, message: "No change. This choice was already saved." };
+
+  await db.insert(schema.consentRecords).values({
+    userId: user.id,
+    purpose: "AI_TRACKING_DATA",
+    granted: grant,
+    version: CONSENT_VERSION,
+  });
+  await recordAudit(user.id, grant ? "consent.ai_tracking_granted" : "consent.ai_tracking_withdrawn");
+  revalidatePath("/privacy");
+  revalidatePath("/intelligence");
+  return {
+    ok: true,
+    message: grant
+      ? "Saved. On the AI Intelligence page you can now ask for an AI summary. You choose what is included each time."
+      : "AI tracking-data consent withdrawn. No habit or lab numbers will be sent to an AI service.",
+  };
+}
+
 // Withdraw the main consent. It stops new health answers being saved. It does NOT delete what is stored:
 // deletion is a separate, clearly confirmed choice.
 export async function withdrawHealthConsentAction(): Promise<ActionState> {
@@ -61,6 +87,7 @@ export async function withdrawHealthConsentAction(): Promise<ActionState> {
   await db.insert(schema.consentRecords).values([
     { userId: user.id, purpose: "HEALTH_ASSESSMENT", granted: false, version: CONSENT_VERSION },
     { userId: user.id, purpose: "AI_PROCESSING", granted: false, version: CONSENT_VERSION },
+    { userId: user.id, purpose: "AI_TRACKING_DATA", granted: false, version: CONSENT_VERSION },
   ]);
   await removeAiInsights(user.id);
   await recordAudit(user.id, "consent.withdrawn");
@@ -73,7 +100,7 @@ export async function withdrawHealthConsentAction(): Promise<ActionState> {
   };
 }
 
-// Delete every assessment, its answers, insights and saved questions. The account stays.
+// Delete every assessment (answers, insights, saved questions) and every daily entry, lab value and weekly goal. The account stays.
 export async function deleteAssessmentDataAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   const parsed = deleteDataSchema.safeParse({ confirm: formData.get("confirm") });
@@ -85,14 +112,19 @@ export async function deleteAssessmentDataAction(_prev: ActionState, formData: F
     .where(eq(schema.assessments.userId, user.id))
     .returning({ id: schema.assessments.id });
   await removeAiInsights(user.id);
+  await db.delete(schema.habitEntries).where(eq(schema.habitEntries.userId, user.id));
+  await db.delete(schema.biomarkerRecords).where(eq(schema.biomarkerRecords.userId, user.id));
+  await db.delete(schema.weeklyGoals).where(eq(schema.weeklyGoals.userId, user.id));
   await recordAudit(user.id, "assessments.deleted");
   revalidatePath("/privacy");
+  revalidatePath("/tracker");
+  revalidatePath("/reports");
 
   return {
     ok: true,
     message:
       removed.length === 0
-        ? "You had no assessment data to delete."
+        ? "Your assessments were already empty. Any daily entries, lab values and weekly goals were deleted too."
         : `Deleted ${removed.length} assessment${removed.length === 1 ? "" : "s"} with all answers, insights and saved questions.`,
   };
 }

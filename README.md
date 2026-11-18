@@ -25,9 +25,13 @@ In the demo, AI consent is off by default. The AI features are also switched off
 | Gentle mode | Optional setting (kept in this browser only) that hides the person's own numbers and "What you reported" lists on Insights and Progress. Safety information and sources always stay visible. |
 | How we test safety | Public page that lists about 35 safety test cases (emergency questions, diagnosis and dosing requests, made-up unsafe AI replies, removal of emails and phone numbers) and runs them **live** against the app's real code. The same list runs as automated tests. Known gaps are shown openly. |
 | Safety card | Public page (`/safety-card`) that says what the app is for, what it does not do, how answers are made, where data goes, what was tested (live count) and what has not been done. It shows whether AI is switched on at that moment. |
+| Lifestyle Tracker | Daily entries (sleep, bedtime, stress, food, exercise, sitting, heat exposure), all optional. Edit and delete, a calendar, weekly and monthly summaries, interactive charts and a comparison of the latest 14 days with the 14 before. An empty box means "not recorded", never zero. It never says a number is good or bad. |
+| Medical Reports | Optional semen analysis and hormone values (testosterone, FSH, LH, prolactin, estradiol) typed by the person from their own report, with date, unit, the lab's own range if they type it, and notes. Latest and previous values are shown side by side. The app supplies no reference range of its own and says results need a professional. |
+| AI Fertility Intelligence | Observations from the person's own records built by a **rules engine** (always available), each with the observation, the data behind it, a general explanation, practical ideas, limits and when to talk to a professional. An optional AI summary can rewrite those facts, but only with separate consent (see below). |
+| Weekly goals (AI Lifestyle Coach) | A fixed menu of small habit goals. The person picks the goal and the number of days and counts days done. Ideas are suggested from the topics in their observations. Not a medical target. |
 | Account activity | Privacy Center page with the person's own audit events in plain words (sign-in, consent changes, downloads, deletions). It contains no health content. |
 | Care navigation | When to see a professional, what to ask, and urgent warning signs. |
-| Consultation Summary | A printable summary the person can bring to an appointment. They choose which sections to include. |
+| Consultation Summary | A printable summary the person can bring to an appointment. They choose which sections to include: assessment answers, a 30-day habit summary, changes over time, recorded lab values and questions for a specialist. |
 | Privacy Center | Separate consents, withdraw consent, download own data (readable text or technical JSON), delete assessment data, delete account. |
 | Health Resources | Public page of source pages that were opened and read. |
 
@@ -38,6 +42,14 @@ In the demo, AI consent is off by default. The AI features are also switched off
 - Only coded answers (for example an age range) are sent for insight notes. Name, email and free text are never sent. Emails and phone numbers typed into a question are removed before sending.
 - For Ask a Question, the AI can only rewrite the passages it is given. The reply must pass four checks: expected format, long enough, no diagnosis, medicine, dosing or prediction wording, and **no number that is not in the sources**. If any check fails, the plain source passages are shown instead, with a short reason code.
 - Under every answer the person can open **Safety checks on the AI reply** (which check passed or failed) and **What was sent to an AI service** (the exact question after personal details were removed, and the titles of the passages sent). When no AI was used it says so.
+
+### Tracking data and AI (added November 2026)
+
+- A **third, separate consent** ("AI tracking-data consent") is needed before any tracker or lab information can go to an AI service. It is off by default and can be withdrawn at any time.
+- Even with consent, nothing is sent automatically. On the Intelligence page the person ticks which groups to include (tracker numbers, assessment answers, lab values). **Lab values are off unless ticked each time.**
+- What is sent is a short list of plain sentences built on our server (averages and counts). No name, email, notes, or exact dates are sent. Nothing is stored from the AI reply.
+- The reply must pass four checks: expected format, no diagnosis or medicine or prediction wording, **no number that was not in the facts sent**, and no wording that calls a change good or bad. If a check fails, or AI is off, a rules-based summary is shown with the reason.
+- The page shows the exact lines that were sent, or says that nothing was sent.
 
 ## Built with
 
@@ -73,7 +85,11 @@ npm run build       # production build, needed before e2e tests
 npm run test:e2e    # end-to-end tests (Playwright), uses a separate test database
 ```
 
-At the last full run in the development sandbox: **112 unit tests and 74 end-to-end tests passed** (desktop and mobile screen sizes), against a local PostgreSQL database.
+At the last full run in the development sandbox: **143 unit tests and 112 end-to-end tests passed** (desktop and mobile screen sizes), against a local PostgreSQL database. The AI parts were tested with a fake AI service. Only the older Ask feature was also tried by hand against the real Groq service.
+
+### Database migration
+
+Run `npm run db:migrate` once against your database after pulling this version. It adds the tables `habit_entries`, `biomarker_records` and `weekly_goals` and a new consent purpose. Nothing existing is changed.
 
 ## Privacy and security design
 
@@ -88,6 +104,9 @@ At the last full run in the development sandbox: **112 unit tests and 74 end-to-
 
 - **Not a medical device and not medical advice.** No clinical validation has been done.
 - **No compliance is claimed.** This project has not been audited for HIPAA, GDPR or any other law or standard.
+- **Tracking, lab values and the AI summary have not been reviewed by a clinician.** Observations only describe the person's own numbers. The explanations reuse wording from the sources already in the library. The library has no page on hormone blood tests, so hormone terms are only named.
+- **Tracking data is self-reported** and the app cannot check it. Averages cover only the days recorded.
+- **AI tracking summary has only been tested with a fake AI service** until a key is added and tried by hand.
 - **Not implemented:** email verification and password reset (the app sends no emails). The "Forgot password?" link opens a page that says this plainly and lists what to do instead.
 - **Rate limiting is in memory.** On a serverless host each server instance counts separately, so limits are approximate. A shared store would be needed for strict limits.
 - **AI was tested with the real Groq service only by hand** (one question, answered and passed the checks). Automated tests use a fake AI service.

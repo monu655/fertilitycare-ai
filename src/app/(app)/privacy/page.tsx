@@ -7,7 +7,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { consentState, recentActivity } from "@/features/privacy/queries";
 import { ACTION_LABELS } from "@/features/privacy/activity-labels";
-import { AiConsentForm, DeleteAccountForm, DeleteAssessmentsForm, WithdrawConsentForm } from "@/features/privacy/forms";
+import { AiConsentForm, AiTrackingConsentForm, DeleteAccountForm, DeleteAssessmentsForm, WithdrawConsentForm } from "@/features/privacy/forms";
 
 export const metadata: Metadata = { title: "Privacy Center" };
 export const instant = false;
@@ -16,8 +16,8 @@ const dateFormat = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeS
 
 export default async function PrivacyPage() {
   const user = await requireUser();
-  const consent = await consentState(user.id);
-  const activity = await recentActivity(user.id);
+  // Two independent database reads: run them together instead of one after the other.
+  const [consent, activity] = await Promise.all([consentState(user.id), recentActivity(user.id)]);
 
   return (
     <div className="space-y-6">
@@ -39,6 +39,16 @@ export default async function PrivacyPage() {
             <Badge tone={consent.ai ? "success" : "neutral"}>{consent.ai ? "Allowed" : "Off"}</Badge>
             {consent.aiAt && <span className="text-muted">Last changed {dateFormat.format(consent.aiAt)} UTC</span>}
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <strong className="text-navy">AI and my tracking data:</strong>
+            <Badge tone={consent.aiTracking ? "success" : "neutral"} >{consent.aiTracking ? "Allowed" : "Off"}</Badge>
+            {consent.aiTrackingAt && <span className="text-muted">Last changed {dateFormat.format(consent.aiTrackingAt)} UTC</span>}
+          </div>
+          <p className="text-muted" data-testid="ai-tracking-explain">
+            Separate from the choice above. If allowed, you can ask the AI Intelligence page for an AI summary. Each time, you choose
+            whether daily habit numbers, assessment answers and lab values are included. Lab values are never included unless you tick
+            them. Names, emails, notes and exact dates are never sent.
+          </p>
           <p className="text-muted">
             AI notes are optional and also need the server to have AI switched on. When allowed, only coded answers are sent
             (no name, email or free text).
@@ -46,6 +56,7 @@ export default async function PrivacyPage() {
         </div>
         <div className="flex flex-wrap items-start gap-4">
           <AiConsentForm granted={consent.ai} />
+          <AiTrackingConsentForm granted={consent.aiTracking} />
           <WithdrawConsentForm granted={consent.health} />
         </div>
         {consent.health && (
@@ -83,10 +94,10 @@ export default async function PrivacyPage() {
       </Card>
 
       <Card className="space-y-3">
-        <CardTitle>Delete assessment data</CardTitle>
+        <CardTitle>Delete assessment and tracking data</CardTitle>
         <p className="text-sm text-muted">
-          Permanently removes all your assessments, answers, insights and saved consultation questions. Your account and
-          consent history stay.
+          Permanently removes all your assessments, answers, insights, saved consultation questions, daily tracker entries, lab values and
+          weekly goals. Your account and consent history stay.
         </p>
         <DeleteAssessmentsForm />
       </Card>

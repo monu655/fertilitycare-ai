@@ -10,6 +10,7 @@ const fmt = (d: Date | string | null | undefined) => (d ? `${when.format(new Dat
 const PURPOSE: Record<string, string> = {
   HEALTH_ASSESSMENT: "Health assessment consent",
   AI_PROCESSING: "AI notes consent",
+  AI_TRACKING_DATA: "AI tracking-data consent",
   RESEARCH: "Research consent",
 };
 
@@ -19,6 +20,16 @@ const ACTIONS: Record<string, string> = {
   "consent.withdrawn": "Health consent withdrawn",
   "consent.ai_granted": "AI notes consent given",
   "consent.ai_withdrawn": "AI notes consent withdrawn",
+  "consent.ai_tracking_granted": "AI tracking-data consent given",
+  "consent.ai_tracking_withdrawn": "AI tracking-data consent withdrawn",
+  "habit.saved": "Daily tracker entry saved",
+  "habit.deleted": "Daily tracker entry deleted",
+  "biomarker.added": "Lab value added",
+  "biomarker.deleted": "Lab value deleted",
+  "goal.added": "Weekly goal added",
+  "goal.updated": "Weekly goal updated",
+  "goal.deleted": "Weekly goal deleted",
+  "ai.tracking_summary": "AI tracking summary requested",
   "assessment.submitted": "Assessment submitted",
   "assessments.deleted": "Assessment data deleted",
   "data.exported": "Data downloaded",
@@ -59,6 +70,33 @@ export function exportAsText(data: ExportData): string {
       }
     }
   });
+
+  heading("Your daily tracker entries");
+  if (data.dailyEntries.length === 0) out.push("No daily entries stored.");
+  for (const e of data.dailyEntries) {
+    const parts = [
+      e.sleepHours !== null ? `sleep ${e.sleepHours} hours` : null,
+      e.bedtimeMinutes !== null ? `bedtime ${String(Math.floor(e.bedtimeMinutes / 60)).padStart(2, "0")}:${String(e.bedtimeMinutes % 60).padStart(2, "0")}` : null,
+      e.stress !== null ? `stress ${e.stress} of 5` : null,
+      e.mealPattern ? `meals ${e.mealPattern.replace("_", " ")}` : null,
+      e.fruitVegPortions !== null ? `${e.fruitVegPortions} fruit and vegetable portions` : null,
+      e.exerciseMinutes !== null ? `exercise ${e.exerciseMinutes} minutes` : null,
+      e.sittingHours !== null ? `sitting ${e.sittingHours} hours` : null,
+      e.heatMinutes !== null ? `heat exposure ${e.heatMinutes} minutes` : null,
+    ].filter(Boolean);
+    out.push(`${e.date}: ${parts.join(", ")}`);
+  }
+
+  heading("Your lab values (typed by you)");
+  if (data.labValues.length === 0) out.push("No lab values stored.");
+  for (const b of data.labValues) {
+    const range = b.labRangeLow !== null || b.labRangeHigh !== null ? ` (range you typed from your report: ${b.labRangeLow ?? "-"} to ${b.labRangeHigh ?? "-"})` : "";
+    out.push(`${b.takenOn}: ${b.marker.replace(/_/g, " ")} ${b.value} ${b.unit}${range}${b.notes ? ` - note: ${b.notes}` : ""}`);
+  }
+
+  heading("Your weekly goals");
+  if (data.weeklyGoals.length === 0) out.push("No weekly goals stored.");
+  for (const g of data.weeklyGoals) out.push(`Week of ${g.weekStart}: ${g.goal.replace(/_/g, " ")} - ${g.daysDone} of ${g.targetDays} days`);
 
   heading("Educational insights created for you");
   if (data.insights.length === 0) out.push("No insights stored.");

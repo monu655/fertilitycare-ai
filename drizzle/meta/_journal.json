@@ -8,6 +8,13 @@
       "when": 1792921508218,
       "tag": "0000_worthless_peter_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794978132177,
+      "tag": "0001_tracker_reports_goals",
+      "breakpoints": true
     }
   ]
 }

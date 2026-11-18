@@ -24,12 +24,21 @@ const data = {
     source: "rules",
     content: i,
   })),
+  dailyEntries: [{ date: "2026-11-01", sleepHours: 7, bedtimeMinutes: 1410, stress: 3, mealPattern: "mostly_home", fruitVegPortions: 3, exerciseMinutes: 30, sittingHours: 6, heatMinutes: null }],
+  labValues: [{ takenOn: "2026-10-20", marker: "fsh", value: 6, unit: "IU/L", labRangeLow: null, labRangeHigh: null, notes: "typed by me" }],
+  weeklyGoals: [{ weekStart: "2026-11-16", goal: "move_daily", targetDays: 3, daysDone: 2 }],
   consultationQuestions: [{ assessmentId: "a1", questions: ["Is my sleep a concern?"] }],
   activityLog: [{ action: "account.created", createdAt: new Date("2026-10-27T08:00:00Z") }],
 } as unknown as Data;
 
 describe("exportAsText", () => {
   const text = exportAsText(data);
+
+  it("includes daily entries, lab values and weekly goals", () => {
+    expect(text).toContain("2026-11-01: sleep 7 hours, bedtime 23:30");
+    expect(text).toContain("fsh 6 IU/L");
+    expect(text).toContain("move daily - 2 of 3 days");
+  });
 
   it("is written as plain sentences, not code", () => {
     expect(text).toContain("YOUR ACCOUNT");

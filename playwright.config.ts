@@ -38,6 +38,7 @@ export default defineConfig({
       AUTH_URL: "http://localhost:3100",
       AUTH_TRUST_HOST: "true",
       SIGNUP_LIMIT_PER_HOUR: "1000",
+      DEMO_LIMIT_PER_HOUR: "1000",
     },
   },
 });

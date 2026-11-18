@@ -19,6 +19,7 @@ export default function PrivacyPolicyPage() {
           <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
             <li>Your name, email address, and a hashed (not readable) password.</li>
             <li>The assessment answers you choose to enter.</li>
+            <li>Daily tracker entries, lab values you type from your own reports, and weekly goals, if you choose to add them.</li>
             <li>A record of the consent you gave, with its version and date.</li>
             <li>Basic audit events (for example, account created). These never contain health answers.</li>
           </ul>
@@ -37,14 +38,14 @@ export default function PrivacyPolicyPage() {
           <p className="text-sm text-muted">
             AI is optional. It is used only if the server has it switched on and you gave a separate AI consent in the
             Privacy Center. Only coded answers (or your question with emails and phone numbers removed) are sent, never your
-            name or email. Under each answer you can see what was sent, or that nothing was.
+            name or email. Tracker and lab information needs its own separate consent and is sent only for the groups you tick each time, and lab values only if you tick them. Under each answer you can see what was sent, or that nothing was.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-xl font-semibold text-navy">Deletion and export</h2>
           <p className="text-sm text-muted">
-            In the Privacy Center you can withdraw consent, download your data, delete your assessment data, and delete your
+            In the Privacy Center you can withdraw consent, download your data, delete your assessment and tracking data, and delete your
             account.
           </p>
         </section>

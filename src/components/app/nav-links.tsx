@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Activity,
+  BrainCircuit,
   ClipboardList,
+  FlaskConical,
+  Target,
   FileText,
   LayoutDashboard,
   LibraryBig,
@@ -21,6 +25,10 @@ export const appLinks = [
   { href: "/assessment", label: "Health Assessment", icon: ClipboardList },
   { href: "/insights", label: "My Insights", icon: Lightbulb },
   { href: "/progress", label: "My Progress", icon: TrendingUp },
+  { href: "/tracker", label: "Lifestyle Tracker", icon: Activity },
+  { href: "/reports", label: "Medical Reports", icon: FlaskConical },
+  { href: "/intelligence", label: "AI Intelligence", icon: BrainCircuit },
+  { href: "/coach", label: "Weekly Goals", icon: Target },
   { href: "/ask", label: "Ask a Question", icon: MessageCircleQuestion },
   { href: "/care", label: "Care Navigation", icon: Stethoscope },
   { href: "/summary", label: "Consultation Summary", icon: FileText },

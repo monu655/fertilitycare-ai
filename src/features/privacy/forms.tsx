@@ -9,6 +9,7 @@ import {
   deleteAccountAction,
   deleteAssessmentDataAction,
   setAiConsentAction,
+  setAiTrackingConsentAction,
   withdrawHealthConsentAction,
 } from "./actions";
 
@@ -21,6 +22,19 @@ export function AiConsentForm({ granted }: { granted: boolean }) {
       <input type="hidden" name="grant" value={granted ? "false" : "true"} />
       <Button type="submit" variant="secondary" loading={pending}>
         {granted ? "Withdraw AI notes consent" : "Allow AI notes"}
+      </Button>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
+export function AiTrackingConsentForm({ granted }: { granted: boolean }) {
+  const [state, action, pending] = useActionState(setAiTrackingConsentAction, initial);
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="grant" value={granted ? "false" : "true"} />
+      <Button type="submit" variant="secondary" loading={pending}>
+        {granted ? "Withdraw AI tracking-data consent" : "Allow AI to read my tracking summary"}
       </Button>
       <FormMessage state={state} />
     </form>

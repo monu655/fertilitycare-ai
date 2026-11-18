@@ -11,6 +11,10 @@ export function explainFallback(reason: string): string {
   if (reason === "network") return "The server could not reach the AI service (internet or firewall).";
   if (reason === "bad_json" || reason === "bad_shape" || reason === "empty_reply" || reason === "too_short")
     return "The AI reply was not in the expected format.";
+  if (reason === "no_consent") return "AI tracking-data consent is off, so nothing was sent. The summary below was built by fixed rules.";
+  if (reason === "ai_off") return "AI is switched off on this server, so nothing was sent. The summary below was built by fixed rules.";
+  if (reason === "no_data") return "There was nothing to send for the groups you chose, so nothing was sent.";
+  if (reason === "judgement") return "The AI reply used wording that calls a change good or bad, so it was not used.";
   if (reason === "unsafe") return "The AI reply did not pass our safety check.";
   if (reason === "invented_number") return "The AI reply contained a number that is not in the sources, so it was not used.";
   return "The AI answer could not be used.";

@@ -3,7 +3,14 @@ import { requireUser } from "@/lib/session";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
-import { hasHealthConsent } from "@/features/assessment/queries";
+import { addDays, longDate, todayIso } from "@/lib/dates";
+import { hasHealthConsent, responsesFor } from "@/features/assessment/queries";
+import { latestSubmitted } from "@/features/insights/queries";
+import { loadHabitEntries } from "@/features/tracker/queries";
+import { comparePeriods, inRange, periodStats, bedtimeSpread } from "@/features/tracker/analysis";
+import { loadBiomarkers, seriesFor } from "@/features/medical/queries";
+import { markerByKey } from "@/features/medical/markers";
+import { buildPatternInsights, ruleQuestions } from "@/features/intelligence/engine";
 import { SUGGESTED_QUESTIONS, loadSummary } from "@/features/summary/queries";
 import { QuestionsForm } from "@/features/summary/questions-form";
 import { PrintButton } from "@/features/summary/print-button";
@@ -16,6 +23,9 @@ const CHOICES = [
   { id: "lifestyle", label: "Lifestyle" },
   { id: "history", label: "Medical history" },
   { id: "tests", label: "Existing test values" },
+  { id: "habits", label: "Daily habit summary (last 30 days)" },
+  { id: "changes", label: "Changes over time (last 14 days vs the 14 before)" },
+  { id: "labs", label: "Lab values I recorded" },
   { id: "topics", label: "Topics to discuss" },
   { id: "questions", label: "Questions to ask" },
 ] as const;
@@ -52,6 +62,17 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
       </div>
     );
   }
+
+  const today = todayIso();
+  const [entries, labs, assessment] = await Promise.all([loadHabitEntries(user.id), loadBiomarkers(user.id), latestSubmitted(user.id)]);
+  const responses = assessment ? await responsesFor(user.id, assessment.id) : null;
+  const month = inRange(entries, addDays(today, -29), today);
+  const stats = periodStats(month);
+  const spread = bedtimeSpread(month);
+  const changes = comparePeriods(entries, today, 14);
+  const labSeries = seriesFor(labs);
+  const habitQuestions = ruleQuestions(buildPatternInsights({ entries, today, responses, biomarkers: labs }).insights);
+  const unitOf = (u: string) => (u ? ` ${u}` : "");
 
   // First visit: everything is included. After "Update preview": only what the person ticked.
   const picked = Array.isArray(params.include) ? params.include : params.include ? [params.include] : [];
@@ -130,6 +151,80 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
               </section>
             ))}
 
+          {included.has("habits") && (
+            <section className="space-y-1" data-testid="summary-habits">
+              <h3 className="font-semibold text-navy">Daily habit summary (last 30 days)</h3>
+              {month.length === 0 ? (
+                <p className="text-sm text-muted">No daily entries recorded in this period.</p>
+              ) : (
+                <>
+                  <p className="text-sm text-muted">{month.length} day{month.length === 1 ? "" : "s"} with entries. Averages cover only the days recorded.</p>
+                  <dl className="divide-y divide-border text-sm">
+                    {stats.map((x) => (
+                      <div key={x.key} className="grid gap-1 py-1.5 sm:grid-cols-[2fr_1fr]">
+                        <dt className="text-muted">{x.label}</dt>
+                        <dd className="font-medium">{x.average === null ? "not recorded" : `${x.average}${unitOf(x.unit)} (${x.recorded} days)`}</dd>
+                      </div>
+                    ))}
+                    {spread && (
+                      <div className="grid gap-1 py-1.5 sm:grid-cols-[2fr_1fr]">
+                        <dt className="text-muted">Bedtime range</dt>
+                        <dd className="font-medium">{spread.minutes} minutes across {spread.nights} nights</dd>
+                      </div>
+                    )}
+                  </dl>
+                </>
+              )}
+              <p className="text-xs text-muted">Self-recorded by the patient and not verified.</p>
+            </section>
+          )}
+
+          {included.has("changes") && (
+            <section className="space-y-1" data-testid="summary-changes">
+              <h3 className="font-semibold text-navy">Changes over time</h3>
+              {changes.some((c) => c.enough) ? (
+                <dl className="divide-y divide-border text-sm">
+                  {changes
+                    .filter((c) => c.enough)
+                    .map((c) => (
+                      <div key={c.key} className="grid gap-1 py-1.5 sm:grid-cols-[2fr_1fr]">
+                        <dt className="text-muted">{c.label}</dt>
+                        <dd className="font-medium">
+                          {c.previous}
+                          {unitOf(c.unit)} before, {c.current}
+                          {unitOf(c.unit)} recently
+                        </dd>
+                      </div>
+                    ))}
+                </dl>
+              ) : (
+                <p className="text-sm text-muted">Not enough entries in both periods (at least 3 days each) to compare.</p>
+              )}
+              <p className="text-xs text-muted">Numbers only. They are not labelled as better or worse.</p>
+            </section>
+          )}
+
+          {included.has("labs") && (
+            <section className="space-y-1" data-testid="summary-labs">
+              <h3 className="font-semibold text-navy">Lab values recorded by the patient</h3>
+              {labSeries.length === 0 ? (
+                <p className="text-sm text-muted">None recorded.</p>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {labSeries.map((g) => (
+                    <li key={`${g.marker}-${g.unit}`}>
+                      <span className="font-medium">{markerByKey(g.marker)?.label ?? g.marker}</span>:{" "}
+                      {g.rows
+                        .map((r) => `${longDate(r.takenOn)} ${r.value} ${r.unit}${r.refLow !== null || r.refHigh !== null ? ` (lab range typed from report: ${r.refLow ?? "-"} to ${r.refHigh ?? "-"})` : ""}`)
+                        .join("; ")}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="text-xs text-muted">Typed by the patient. Please see the original laboratory reports. Interpretation belongs to a healthcare professional.</p>
+            </section>
+          )}
+
           {included.has("topics") && (
             <section className="space-y-1">
               <h3 className="font-semibold text-navy">Topics the patient may wish to discuss</h3>
@@ -150,7 +245,7 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
             <section className="space-y-1">
               <h3 className="font-semibold text-navy">Questions to ask</h3>
               <ul className="list-disc space-y-0.5 pl-5 text-sm">
-                {[...data.userQuestions, ...SUGGESTED_QUESTIONS].map((q) => (
+                {[...new Set([...data.userQuestions, ...habitQuestions, ...SUGGESTED_QUESTIONS])].map((q) => (
                   <li key={q}>{q}</li>
                 ))}
               </ul>

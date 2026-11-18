@@ -4,11 +4,14 @@
 
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
   pgEnum,
   pgTable,
+  real,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -21,6 +24,8 @@ export const consentPurposeEnum = pgEnum("consent_purpose", [
   "HEALTH_ASSESSMENT",
   "AI_PROCESSING",
   "RESEARCH",
+  // Separate consent before daily habit numbers or lab entries may be sent to an AI service.
+  "AI_TRACKING_DATA",
 ]);
 export const tokenTypeEnum = pgEnum("token_type", ["EMAIL_VERIFY", "PASSWORD_RESET"]);
 export const exportStatusEnum = pgEnum("export_status", ["REQUESTED", "READY", "FAILED"]);
@@ -169,6 +174,68 @@ export const auditEvents = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("audit_user_created_idx").on(t.userId, t.createdAt), index("audit_action_idx").on(t.action)],
+);
+
+// One row per person per day. Every field except the date is optional.
+// There is deliberately no free-text column here, so nothing identifying can be typed into a daily entry.
+export const habitEntries = pgTable(
+  "habit_entries",
+  {
+    id: text("id").primaryKey().$defaultFn(createId),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    entryDate: date("entry_date", { mode: "string" }).notNull(),
+    sleepHours: real("sleep_hours"),
+    bedtimeMinutes: integer("bedtime_minutes"), // minutes after midnight, 0 to 1439
+    stress: smallint("stress"), // 1 (low) to 5 (high), the person's own rating
+    mealPattern: text("meal_pattern"), // mostly_home | mixed | mostly_packaged
+    fruitVeg: smallint("fruit_veg"), // portions
+    exerciseMinutes: integer("exercise_minutes"),
+    sittingHours: real("sitting_hours"),
+    heatMinutes: integer("heat_minutes"), // hot tub, sauna, hot bath, heated seat
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("habit_user_date_uq").on(t.userId, t.entryDate)],
+);
+
+// Values the person typed from their own laboratory report. The app never supplies a reference range:
+// refLow and refHigh are only what the person copied from their report.
+export const biomarkerRecords = pgTable(
+  "biomarker_records",
+  {
+    id: text("id").primaryKey().$defaultFn(createId),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    takenOn: date("taken_on", { mode: "string" }).notNull(),
+    marker: text("marker").notNull(),
+    value: real("value").notNull(),
+    unit: text("unit").notNull(),
+    refLow: real("ref_low"),
+    refHigh: real("ref_high"),
+    notes: text("notes"), // short, never sent to any AI service
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("biomarker_user_marker_idx").on(t.userId, t.marker, t.takenOn)],
+);
+
+// A small goal the person chose for one week, and how many days they did it.
+export const weeklyGoals = pgTable(
+  "weekly_goals",
+  {
+    id: text("id").primaryKey().$defaultFn(createId),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    weekStart: date("week_start", { mode: "string" }).notNull(), // the Monday
+    goalKey: text("goal_key").notNull(),
+    targetDays: smallint("target_days").notNull(),
+    daysDone: smallint("days_done").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("goal_user_week_key_uq").on(t.userId, t.weekStart, t.goalKey)],
 );
 
 export type User = typeof users.$inferSelect;
