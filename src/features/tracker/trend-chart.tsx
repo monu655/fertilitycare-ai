@@ -77,7 +77,7 @@ export function TrendChart({ entries, today }: { entries: HabitEntry[]; today: s
         <p className="text-sm text-muted">No {metric.short.toLowerCase()} entries in the last {range} days.</p>
       ) : (
         <>
-          <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${metric.short} over the last ${range} days. ${points.length} entries.`} className="w-full max-w-2xl">
+          <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${metric.short} over the last ${range} days. ${points.length} entries.`} className="w-full max-w-2xl">
             <line x1={pad.left} y1={H - pad.bottom} x2={W - pad.right} y2={H - pad.bottom} stroke="#c9d1de" />
             <line x1={pad.left} y1={pad.top} x2={pad.left} y2={H - pad.bottom} stroke="#c9d1de" />
             <text x={pad.left - 6} y={H - pad.bottom + 4} textAnchor="end" fontSize="11" fill="#68758a">

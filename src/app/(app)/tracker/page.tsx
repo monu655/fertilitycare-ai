@@ -85,7 +85,7 @@ export default async function TrackerPage({ searchParams }: { searchParams: Prom
             return (
               <li key={d}>
                 {future ? (
-                  <span className={`${cls} opacity-40`} aria-label={label}>
+                  <span className={`${cls} border-dashed bg-surface text-slate-600`} aria-label={label}>
                     {Number(d.slice(8))}
                   </span>
                 ) : (
@@ -119,7 +119,7 @@ export default async function TrackerPage({ searchParams }: { searchParams: Prom
             <p className="text-sm text-muted">
               Averages of the days you recorded. This only shows the numbers. It does not say if a change is good or bad.
             </p>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="w-full min-w-[30rem] text-sm">
                 <caption className="sr-only">Average per measure, earlier 14 days and latest 14 days</caption>
                 <thead>
@@ -152,7 +152,7 @@ export default async function TrackerPage({ searchParams }: { searchParams: Prom
 
           <Card className="space-y-3" data-testid="weekly-summary">
             <CardTitle>Weekly summary</CardTitle>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="w-full min-w-[36rem] text-sm">
                 <caption className="sr-only">Weekly averages</caption>
                 <thead>
@@ -182,7 +182,7 @@ export default async function TrackerPage({ searchParams }: { searchParams: Prom
 
           <Card className="space-y-3" data-testid="monthly-summary">
             <CardTitle>Monthly summary</CardTitle>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="w-full min-w-[36rem] text-sm">
                 <caption className="sr-only">Monthly averages</caption>
                 <thead>

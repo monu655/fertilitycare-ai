@@ -227,12 +227,27 @@ test.describe("consultation preparation", () => {
   });
 });
 
+test.describe("security headers", () => {
+  test("pages send basic hardening headers", async ({ request }) => {
+    const r = await request.get("/sign-in");
+    expect(r.headers()["x-content-type-options"]).toBe("nosniff");
+    expect(r.headers()["x-frame-options"]).toBe("DENY");
+    expect(r.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  });
+});
+
 test.describe("privacy coverage of tracking data", () => {
   test("export includes tracking data, and deleting removes it", async ({ page }) => {
     await startDemo(page);
     const before = await (await page.request.post("/api/privacy/export", { form: { format: "json" } })).json();
     expect(before.dailyEntries.length).toBeGreaterThan(10);
     expect(before.labValues.length).toBeGreaterThan(3);
+
+    const text = await (await page.request.post("/api/privacy/export", { form: { format: "text" } })).text();
+    expect(text).toContain("YOUR DAILY TRACKER ENTRIES");
+    expect(text).toMatch(/\d{4}-\d{2}-\d{2}: sleep/);
+    expect(text).toContain("YOUR LAB VALUES");
+    expect(text).toContain("fsh 6 IU/L");
 
     await page.goto("/privacy");
     await page.getByLabel(/Type DELETE to confirm/).first().fill("DELETE");

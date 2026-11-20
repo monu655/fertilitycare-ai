@@ -67,7 +67,7 @@ export default async function HowWeTestPage() {
       {groups.map((group) => (
         <Card key={group} className="space-y-3">
           <CardTitle>{group}</CardTitle>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="w-full min-w-[34rem] text-sm">
               <caption className="sr-only">{group}</caption>
               <thead>

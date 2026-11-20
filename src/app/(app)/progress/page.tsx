@@ -51,7 +51,7 @@ export default async function ProgressPage() {
 
       <Card className="space-y-3">
         <CardTitle>Lifestyle answers over time</CardTitle>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="w-full min-w-[32rem] text-sm" data-testid="lifestyle-table">
             <caption className="sr-only">Lifestyle answers for each submitted assessment</caption>
             <thead>

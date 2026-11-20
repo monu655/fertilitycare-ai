@@ -28,7 +28,7 @@ const NOT_SENT = ["no_consent", "ai_off", "no_data"];
 
 // Builds the facts server-side from the signed-in user's own rows. The browser only says WHICH groups to include.
 // Lab values are never included unless the person ticks them in this very request.
-export async function intelligenceAction(_prev: IntelligenceState, formData: FormData): Promise<IntelligenceState> {
+export async function intelligenceAction(_prevState: IntelligenceState, formData: FormData): Promise<IntelligenceState> {
   const user = await requireUser();
   if (!(await hasHealthConsent(user.id))) return { message: "Health consent is needed first (Health Assessment, step 1)." };
   if (!rateLimit(`intelligence:${user.id}`, 10, 60 * 60 * 1000).ok) {
